@@ -1,0 +1,46 @@
+
+spring:
+  application:
+    name: config-server
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://github.com/indiagator/code22-config-server-properties.git
+          refresh-rate: 1
+  zipkin:
+    base-url: http://zipkin-server:9411
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/
+  instance:
+    hostname: config-server
+    instance-id: ${spring.application.name}:${random.value}
+
+
+logging:
+  level:
+    org:
+      springframework: DEBUG
+
+zipkin:
+  baseUrl: http://zipkin-server:9411
+
+server:
+  port: 8888
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: refresh
+
+
+
+
+
+
