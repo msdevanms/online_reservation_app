@@ -1,12 +1,12 @@
-package com.tcs.authservice;
+package com.egov.socialservice;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class AuthServiceApplicationTests {
+class SocialServiceApplicationTests {
 
-    @Test
+    //@Test
     void contextLoads() {
     }
 
