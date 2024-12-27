@@ -41,8 +41,9 @@ public class CompositorController {
     public String createBooking(@RequestBody BookingRequest bookingRequest) {
         return compositorService.createBooking(
                 bookingRequest.getBusNumber(),
+                bookingRequest.getSource(),
+                bookingRequest.getDestination(),
                 bookingRequest.getNumberOfSeats(),
-                bookingRequest.getCustomerName(),
                 bookingRequest.getBookingNumber()
         );    }
 }

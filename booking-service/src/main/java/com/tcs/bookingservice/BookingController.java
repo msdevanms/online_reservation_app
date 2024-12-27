@@ -1,6 +1,9 @@
 package com.tcs.bookingservice;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.tomcat.util.json.JSONParser;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +22,11 @@ public class BookingController {
 
     @Autowired
     private InventoryClient inventoryClient;
+
+    @Autowired
+    private KafkaProducerService kafkaProducerService;
+    @Qualifier("jacksonObjectMapper")
+
 
     @PostMapping("/reserve")
     public ResponseEntity<BookingResponse> reserveSeats(@RequestBody BookingRequest request) {
@@ -78,8 +86,19 @@ public class BookingController {
                     // Save final Booking (confirmed status)
                     Booking confirmedBooking = bookingRepository.save(reservation);
 
-                    // Publish event to Kafka (for payment processing)
-                    // ... (Kafka integration would go here)
+                    String jsonMessage = String.format(
+                            "{\n" +
+                                    "    \"busNumber\": \"%s\",\n" +
+                                    "    \"numberOfSeats\": %d,\n" +
+                                    "    \"bookingNumber\": \"%s\"\n" +
+                                    "}",
+                            confirmedBooking.getBusNumber(), confirmedBooking.getNumberOfSeats(), confirmedBooking.getBookingNumber()
+                    );
+
+                    // Publish event to Kafka (for inventory update)
+                    String bookingDetails =  jsonMessage;
+
+                    kafkaProducerService.sendMessage(bookingDetails);
 
                     return ResponseEntity.status(HttpStatus.CREATED).body(new BookingResponse(confirmedBooking.getBookingNumber(), "Booking confirmed."));
                 } else {

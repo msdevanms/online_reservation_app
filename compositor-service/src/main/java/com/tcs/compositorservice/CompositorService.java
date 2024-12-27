@@ -66,21 +66,21 @@ public class CompositorService {
      * Method to create a booking.
      * Calls Booking Service to create the booking after seat reservation.
      */
-    public String createBooking(String busNumber, int numberOfSeats, String customerName, String bookingNumber) {
+    public String createBooking(String busNumber,String source,String destination,int numberOfSeat,  String bookingNumber) {
         // First, check and reserve seats
-        String availabilityResponse = checkAvailabilityAndCache(busNumber, numberOfSeats);
+        String availabilityResponse = checkAvailabilityAndCache(busNumber, numberOfSeat);
         if (availabilityResponse.contains("not available")) {
             return "Seats not available. Booking cannot be created.";
         }
 
-        String reserveResponse = reserveSeats(busNumber, numberOfSeats);
+        String reserveResponse = reserveSeats(busNumber, numberOfSeat);
         if (reserveResponse.contains("Error")) {
             return reserveResponse;  // If reserving failed
         }
 
         // After reserving seats, create the booking
         String url = BOOKING_SERVICE_URL + "/book";
-        BookingRequest bookingRequest = new BookingRequest(busNumber, numberOfSeats, customerName,bookingNumber);
+        BookingRequest bookingRequest = new BookingRequest(busNumber,source,destination,numberOfSeat,bookingNumber);
         try {
             return restTemplate.postForObject(url, bookingRequest, String.class);
         } catch (Exception e) {

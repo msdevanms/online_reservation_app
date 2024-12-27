@@ -8,8 +8,9 @@ import lombok.*;
 @Data
 public class BookingRequest {
     private String busNumber;
+    private String source;
+    private String destination;
     private int numberOfSeats;
-    private String customerName;
     private String bookingNumber;
 
 }
