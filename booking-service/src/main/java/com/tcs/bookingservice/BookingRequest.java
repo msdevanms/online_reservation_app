@@ -10,6 +10,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 class BookingRequest {
+    private String bookingNumber;
     private String busNumber;
     private String source;
     private String destination;

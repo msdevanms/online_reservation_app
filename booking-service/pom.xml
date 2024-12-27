@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.tcs</groupId>
-    <artifactId>admin-service</artifactId>
+    <artifactId>booking-service</artifactId>
     <version>dev-1</version>
-    <name>admin-service</name>
-    <description>admin-service</description>
+    <name>booking-service</name>
+    <description>booking-service</description>
     <url/>
     <licenses>
         <license/>

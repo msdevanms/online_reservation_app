@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 class BookingResponse {
-    private String message;
     private String bookingNumber;
+    private String message;
 
 }

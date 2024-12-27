@@ -1,4 +1,4 @@
-package com.tcs.inventoryservice;
+package com.tcs.compositorservice;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;

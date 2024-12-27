@@ -1,6 +1,5 @@
 package com.tcs.bookingservice;
 
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,27 +20,27 @@ public class BookingController {
     @Autowired
     private InventoryClient inventoryClient;
 
-    @PostMapping
-    public ResponseEntity<BookingResponse> createBooking(@RequestBody BookingRequest request) {
+    @PostMapping("/reserve")
+    public ResponseEntity<BookingResponse> reserveSeats(@RequestBody BookingRequest request) {
         try {
             // Check seat availability with Inventory Service
             int availableSeats = inventoryClient.getAvailableSeats(request.getBusNumber());
             if (availableSeats < request.getNumberOfSeats()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(new BookingResponse("Not enough seats available.", "NA"));
+                        .body(new BookingResponse("Not enough seats available to reserve.", "NA"));
             }
 
-            // Create Booking entity
-            Booking booking = new Booking();
-            booking.setBookingNumber(UUID.randomUUID().toString());
-            booking.setBusNumber(request.getBusNumber());
-            booking.setSource(request.getSource());
-            booking.setDestination(request.getDestination());
-            booking.setNumberOfSeats(request.getNumberOfSeats());
-            booking.setStatus("PENDING"); // Initial status
+            // Create Reservation entity (not confirmed yet)
+            Booking reservation = new Booking();
+            reservation.setBookingNumber(UUID.randomUUID().toString());
+            reservation.setBusNumber(request.getBusNumber());
+            reservation.setSource(request.getSource());
+            reservation.setDestination(request.getDestination());
+            reservation.setNumberOfSeats(request.getNumberOfSeats());
+            reservation.setStatus("RESERVED"); // Status indicating reservation
 
-            // Save Booking to database
-            Booking savedBooking = bookingRepository.save(booking);
+            // Save Reservation to database
+            Booking savedReservation = bookingRepository.save(reservation);
 
             // Create and save Passengers (if provided in the request)
             if (request.getPassengers() != null && !request.getPassengers().isEmpty()) {
@@ -49,21 +48,52 @@ public class BookingController {
                 for (String passengerName : request.getPassengers()) {
                     Passenger passenger = new Passenger();
                     passenger.setName(passengerName);
-                    passenger.setBooking(savedBooking);
+                    passenger.setBooking(savedReservation);
                     passengers.add(passenger);
                 }
-                savedBooking.setPassengers(passengers);
-                bookingRepository.save(savedBooking); // Save with associated passengers
+                savedReservation.setPassengers(passengers);
+                bookingRepository.save(savedReservation); // Save with associated passengers
             }
 
-            // Publish event to Kafka (for payment processing)
-            // ... (Kafka integration would go here)
-
-            return ResponseEntity.status(HttpStatus.CREATED).body(new BookingResponse(savedBooking.getBookingNumber(), savedBooking.getBusNumber()));
+            return ResponseEntity.status(HttpStatus.CREATED).body(new BookingResponse(savedReservation.getBookingNumber(), "Seats reserved successfully."));
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new BookingResponse("Failed to create booking.", "NA"));
+                    .body(new BookingResponse("Failed to reserve seats.", "NA"));
+        }
+    }
+
+    @PostMapping("/book")
+    public ResponseEntity<BookingResponse> bookSeats(@RequestBody BookingRequest request) {
+        try {
+            // Check if the reservation exists and is in the RESERVED state
+            Optional<Booking> optionalReservation = bookingRepository.findByBookingNumber(request.getBookingNumber());
+            if (optionalReservation.isPresent()) {
+                Booking reservation = optionalReservation.get();
+                if ("RESERVED".equals(reservation.getStatus())) {
+
+                    // Confirm booking and process payment (simulated here)
+                    reservation.setStatus("CONFIRMED");
+
+                    // Save final Booking (confirmed status)
+                    Booking confirmedBooking = bookingRepository.save(reservation);
+
+                    // Publish event to Kafka (for payment processing)
+                    // ... (Kafka integration would go here)
+
+                    return ResponseEntity.status(HttpStatus.CREATED).body(new BookingResponse(confirmedBooking.getBookingNumber(), "Booking confirmed."));
+                } else {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body(new BookingResponse("Reservation already confirmed or invalid.", "NA"));
+                }
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new BookingResponse("Reservation not found.", "NA"));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new BookingResponse("Failed to book the reservation.", "NA"));
         }
     }
 
@@ -82,6 +112,4 @@ public class BookingController {
             return ResponseEntity.notFound().build();
         }
     }
-    }
-
-
+}
